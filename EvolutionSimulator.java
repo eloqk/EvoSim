@@ -154,13 +154,11 @@ class Evolution_field extends JPanel {
             EvolutionSimulator.ticks = 0;
         }
         try {
-            Evolution_field.update();
+            Evolution_field.update(EvolutionSimulator.ticks);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }
         System.gc();
-
-
     });
     @Override
     public void paint(Graphics g) {
@@ -180,7 +178,6 @@ class Evolution_field extends JPanel {
         spawn();
     }
     public static void spawn(){
-        //Information-
         _genome =Integer.parseInt(EvolutionSimulator.textfield_genom.getText());
         _allowed_mutations = Integer.parseInt(EvolutionSimulator.textfield_allowed_gen.getText());
         _allowed_mutations_first_stg = Integer.parseInt(EvolutionSimulator.textfield_allowed_gen_start.getText());
@@ -194,8 +191,8 @@ class Evolution_field extends JPanel {
         _total_being=0;
         _died =0;
         _born =0;
-        //Information-
         Being being = new Being(1,350,350,null,_start_energy);
+        Being being1 = new Being(1,650,650,null,_start_energy);
     }
     public static void respawn() {
         if(Evolution_field.Being_Posititon.keySet().size()<=0){
@@ -203,7 +200,7 @@ class Evolution_field extends JPanel {
         }
     }
 
-    public static void update(){
+    public static void update(int ticks){
         //Information-
         EvolutionSimulator.label_number_of_death2.setText(String.valueOf(_died));
         EvolutionSimulator.label_number_of_birth2.setText(String.valueOf(_born));
@@ -216,7 +213,7 @@ class Evolution_field extends JPanel {
                 respawn();
             }
             for(Being be : Being_Posititon.keySet()){
-                be.update(EvolutionSimulator.ticks);
+                be.update(ticks);
             }
             for(Being be : Being_Posititon.keySet()){
                 be.energy+=Evolution_field._energy_minus;
