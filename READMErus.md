@@ -39,7 +39,7 @@
 ```
   public static int _size_being;
 ```
-Размер существ. Рекомендую ставить четный.
+Размер существ. Рекомендую ставить четный. 
 ```
     public static int _start_energy;
     public static int _energy_eat;
