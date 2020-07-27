@@ -14,6 +14,7 @@ public class EvolutionSimulator {// this class only for correctly displaying GUI
     private static final JButton button_stat = new JButton("Statistic");
     private static final JButton button_spawn = new JButton("Spawn");
     private static final JButton button_stop = new JButton("Stop");
+    private static final JButton button_set_genome = new JButton("set_genome");
     private static final JButton button_remove = new JButton("Remove all");
     public static JCheckBox checkbox_respawn = new JCheckBox("Respawn");
     public static JLabel label_ticks = new JLabel("");
@@ -46,7 +47,8 @@ public class EvolutionSimulator {// this class only for correctly displaying GUI
     public static JLabel label_number_of_total1 = new JLabel("total beings this spawn:");
     public static JLabel label_number_of_total2 = new JLabel("");
     private static final JLabel label_status = new JLabel("Information:  ");
-    private static final JLabel label_status2 = new JLabel("");
+    private static final JLabel label_empty2 = new JLabel("");
+    private static final JLabel label_empty = new JLabel("");
     private static final JLabel label_tickss = new JLabel("tick:");
 
 
@@ -67,6 +69,8 @@ public class EvolutionSimulator {// this class only for correctly displaying GUI
         panel_top.add(button_spawn);
         panel_top.add(button_remove);
         panel_top.add(button_stat);
+        panel_top.add(button_set_genome);
+        panel_top.add(label_empty);
         panel_top.add(checkbox_respawn);
         panel_top.add(label_size_being);
         panel_top.add(textfield_size_being);
@@ -90,7 +94,7 @@ public class EvolutionSimulator {// this class only for correctly displaying GUI
         panel_top.add(textfield_energy_eat);
 
         panel_east.add(label_status);
-        panel_east.add(label_status2);
+        panel_east.add(label_empty2);
         panel_east.add(label_number_of_total1);
         panel_east.add(label_number_of_total2);
         panel_east.add(label_number_of_being1);
@@ -126,6 +130,15 @@ public class EvolutionSimulator {// this class only for correctly displaying GUI
                 Evolution_field.respawn();
             }
         });
+        button_set_genome.addActionListener(e -> {
+            Evolution_field.update_settings();
+            JFrame frame2 = new JFrame("Genome options");
+            frame2.setLayout(new FlowLayout());
+            frame2.getContentPane().add(new Panel_Genome(Evolution_field._genome,frame2));
+            frame2.pack();
+            frame2.setVisible (true);
+            frame2.setResizable(true);
+        });
     }
 }
 class Evolution_field extends JPanel {
@@ -145,10 +158,11 @@ class Evolution_field extends JPanel {
     public static int _born;
     public static int _died;
     public static int _timescale=1;
+    public static HashMap<Integer,Integer> new_genome = new HashMap<Integer,Integer>();
     public static Random random = new Random();
     public static HashMap<Being,ArrayList<Integer>> Being_Posititon = new HashMap<>();// positions all of the beings
     public static Timer timer = new Timer(_timescale, e -> {
-        if(EvolutionSimulator.ticks< _genome){
+        if(EvolutionSimulator.ticks< (_genome)){
             EvolutionSimulator.ticks+=1;
         }else {
             EvolutionSimulator.ticks = 0;
@@ -160,6 +174,11 @@ class Evolution_field extends JPanel {
         }
         System.gc();
     });
+
+    public Evolution_field(){
+        new_genome=null;
+    }
+
     @Override
     public void paint(Graphics g) {
         super.paint(g);
@@ -174,11 +193,20 @@ class Evolution_field extends JPanel {
         }
         repaint();
     }
-    public Evolution_field(){
-        spawn();
-    }
     public static void spawn(){
-        _genome =Integer.parseInt(EvolutionSimulator.textfield_genom.getText());
+        update_settings();
+        _total_being=0;
+        _died =0;
+        _born =0;
+        Being being = new Being(1,350,350,new_genome,_start_energy);
+    }
+    public static void respawn() {
+        if(Evolution_field.Being_Posititon.keySet().size()<=0){
+            Evolution_field.spawn();
+        }
+    }
+    public static void update_settings(){
+        _genome =Integer.parseInt(EvolutionSimulator.textfield_genom.getText())-1;
         _allowed_mutations = Integer.parseInt(EvolutionSimulator.textfield_allowed_gen.getText());
         _allowed_mutations_first_stg = Integer.parseInt(EvolutionSimulator.textfield_allowed_gen_start.getText());
         _diff_Genome = Integer.parseInt(EvolutionSimulator.textfield_diff_genom.getText());
@@ -188,18 +216,11 @@ class Evolution_field extends JPanel {
         _energy_minus=Integer.parseInt(EvolutionSimulator.textfield_energy_minus.getText());
         _energy_minus_birth=Integer.parseInt(EvolutionSimulator.textfield_energy_minus_birth.getText());
         _energy_minus_moving=Integer.parseInt(EvolutionSimulator.textfield_energy_minus_moving.getText());
-        _total_being=0;
-        _died =0;
-        _born =0;
-        Being being = new Being(1,350,350,null,_start_energy);
-        Being being1 = new Being(1,650,650,null,_start_energy);
     }
-    public static void respawn() {
-        if(Evolution_field.Being_Posititon.keySet().size()<=0){
-            Evolution_field.spawn();
-        }
-    }
+    public static void set_new_genome(HashMap<Integer,Integer> new_genome){
+        Evolution_field.new_genome=new_genome;
 
+    }
     public static void update(int ticks){
         //Information-
         EvolutionSimulator.label_number_of_death2.setText(String.valueOf(_died));
@@ -219,6 +240,66 @@ class Evolution_field extends JPanel {
                 be.energy+=Evolution_field._energy_minus;
             }
         }catch (Exception ignored){}
+    }
+
+}
+
+class Panel_Genome extends JPanel{
+    private  ArrayList<JTextField> textFields = new ArrayList<JTextField>();
+    private  HashMap<Integer,Integer> _new_genome = new HashMap<Integer,Integer>();
+    private int Genome_number;
+    private  JFrame frame;
+    private  JPanel panel_center = new JPanel();
+    private  JPanel panel_bottom= new JPanel();
+    private  JButton button_close = new JButton("Close");
+    private  JButton button_OK = new JButton("OK");
+    public Panel_Genome(int Genome_number1,JFrame frame1){
+        this.Genome_number = Genome_number1;
+        this.frame = frame1;
+        setLayout(new BorderLayout());
+        panel_center.setLayout(new GridLayout(0,12));
+        panel_bottom.setLayout(new FlowLayout());
+        add(panel_center,BorderLayout.CENTER);
+        add(panel_bottom,BorderLayout.SOUTH);
+        set_buttons_acts();
+        creating_ui();
+    }
+    public  void set_buttons_acts(){
+        button_close.addActionListener(e -> {
+            frame.dispose();
+        });
+        button_OK.addActionListener(e -> {
+            updating_and_sending_genome();
+            frame.dispose();
+        });
+    }
+    public void creating_ui(){
+        for(int i =0;i<=(Genome_number);i++){
+            String label_string = i +":";
+            JLabel label = new JLabel(label_string);
+            JTextField textfield = new JTextField(2);
+
+            textFields.add(textfield);
+            panel_center.add(label);
+            panel_center.add(textfield);
+        }
+        panel_bottom.add(button_close);
+        panel_bottom.add(button_OK);
+    }
+    public void updating_and_sending_genome(){
+        for(int i = 0;i<=(Genome_number);i++){
+            int textfield_int;
+            String textfield_string = textFields.get(i).getText();
+            if(textfield_string.equals("")){
+                textfield_int = 0;
+            }else{
+                textfield_int = Integer.parseInt(textfield_string);
+            }
+            _new_genome.put(i,textfield_int);
+        }
+        System.out.println(_new_genome);
+        Evolution_field.set_new_genome(_new_genome);
+
     }
 
 }
@@ -270,9 +351,9 @@ class Being{
         this.energy=energy1;
         if(genome!=null){// if genome exists, genome will be randomly mutated
             this.genome=genome;
-            this.genome.put(Evolution_field.random.nextInt(Evolution_field._genome),Evolution_field.random.nextInt(Evolution_field._allowed_mutations));
-        }else{
-            for(int i = 0; i<=Evolution_field._genome; i++){
+            this.genome.put(Evolution_field.random.nextInt(Evolution_field._genome+1),Evolution_field.random.nextInt(Evolution_field._allowed_mutations));
+        } else{
+            for(int i = 0; i<=(Evolution_field._genome); i++){
                 this.genome.put(i,Evolution_field.random.nextInt(Evolution_field._allowed_mutations_first_stg));
             }
         }
@@ -321,7 +402,7 @@ class Being{
                                 energy+=Evolution_field._energy_eat;
                                 be.status=2;
                             }else{
-                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome +1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome +1)));
+                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome+1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome+1)));
                             }
                         }
                     }
@@ -337,7 +418,7 @@ class Being{
                                 energy+=Evolution_field._energy_eat;
                                 be.status=2;
                             }else{
-                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome +1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome +1)));
+                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome+1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome+1)));
                             }
                         }
                     }
@@ -353,7 +434,7 @@ class Being{
                                 energy+=Evolution_field._energy_eat;
                                 be.status=2;
                             }else{
-                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome +1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome +1)));
+                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome+1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome+1)));
                             }
                         }
                     }
@@ -369,7 +450,7 @@ class Being{
                                 energy+=Evolution_field._energy_eat;
                                 be.status=2;
                             }else{
-                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome +1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome +1)));
+                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome+1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome+1)));
                             }
                         }
                     }
@@ -385,7 +466,7 @@ class Being{
                                 energy+=Evolution_field._energy_eat;
                                 be.status=2;
                             }else{
-                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome +1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome +1)));
+                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome+1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome+1)));
                             }
 
                         }
@@ -403,7 +484,7 @@ class Being{
                                 energy+=Evolution_field._energy_eat;
                                 be.status=2;
                             }else{
-                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome +1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome +1)));
+                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome+1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome+1)));
                             }
 
                         }
@@ -421,7 +502,7 @@ class Being{
                                 energy+=Evolution_field._energy_eat;
                                 be.status=2;
                             }else{
-                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome +1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome +1)));
+                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome+1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome+1)));
                             }
 
                         }
@@ -439,7 +520,7 @@ class Being{
                                 energy+=Evolution_field._energy_eat;
                                 be.status=2;
                             }else{
-                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome +1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome +1)));
+                                genome.put(Evolution_field.random.nextInt(Evolution_field._genome+1),be.genome.get(Evolution_field.random.nextInt(Evolution_field._genome+1)));
                             }
 
                         }
@@ -499,7 +580,7 @@ class Being{
                 }
                 //---------------------16---------------------
                 else if(tick==16){
-                    genome.put(Evolution_field.random.nextInt(Evolution_field._genome),Evolution_field.random.nextInt(Evolution_field._allowed_mutations));
+                    genome.put(Evolution_field.random.nextInt(Evolution_field._genome+1),Evolution_field.random.nextInt(Evolution_field._allowed_mutations));
                 }
                 //---------------------17---------------------
                 else if(tick==17){
@@ -530,7 +611,7 @@ class Being{
     public void update(int tick) {
         _do_(genome.get(tick));
     }
-    public int differents(HashMap<Integer,Integer> hashMap1, HashMap<Integer,Integer> hashMap2){// find difference between two hashmaps(genom)
+    public int differents(HashMap<Integer,Integer> hashMap1, HashMap<Integer,Integer> hashMap2){// find difference between two hashmaps(genome)
         int score = 0;
         for(int i = 0; i<=Evolution_field._genome; i++){
             if(hashMap1.get(i).equals(hashMap2.get(i))){
